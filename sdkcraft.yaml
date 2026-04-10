@@ -1,0 +1,107 @@
+name: flutter
+adopt-info: flutter
+build-base: ubuntu@24.04
+title: Flutter SDK
+summary: Google's UI toolkit for multi-platform apps
+description: |
+  This SDK provides the Flutter framework and Dart SDK for building
+  natively compiled applications for mobile, web, and desktop from a single
+  codebase. The pub package cache is persisted on the host to speed up
+  dependency resolution across workshop updates.
+
+  ## Key components
+
+  - `flutter`: The Flutter CLI for creating, building, and running apps.
+    The version is determined by the SDK release, not the base image.
+  - `dart`: The Dart SDK, bundled with Flutter, for general Dart development.
+  - Pub cache: Configured to persist at `~/.pub-cache` with a bind mount
+    to the host, so downloaded packages survive workshop updates.
+
+  ## Setup actions
+
+  On launch, the SDK:
+
+  - Bind-mounts a writable directory over `$SDK/.git` so Flutter's
+    version detection works while the SDK volume stays read-only.
+  - Adds Flutter and Dart binaries to `PATH` system-wide.
+  - Installs Linux desktop build dependencies (clang, cmake, ninja, GTK).
+  - Pre-populates the Flutter artifact cache at build time so
+    first-run latency is minimal.
+license: BSD-3-Clause
+platforms:
+  amd64:
+    build-on: [amd64]
+    build-for: [amd64]
+
+plugs:
+  git:
+    interface: mount
+    workshop-target: $SDK/.git
+  cache:
+    interface: mount
+    workshop-target: $SDK/bin/cache
+  dart-tool:
+    interface: mount
+    workshop-target: $SDK/packages/flutter_tools/.dart_tool
+  pub-cache:
+    interface: mount
+    workshop-target: /home/workshop/.pub-cache
+  desktop:
+    interface: desktop
+
+parts:
+  flutter:
+    plugin: nil
+    build-packages:
+      - git
+      - curl
+      - unzip
+      - xz-utils
+    override-pull: |
+      VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
+      craftctl set version="$VERSION"
+      curl -fLO "https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_${VERSION}-stable.tar.xz"
+      tar -xJf "flutter_linux_${VERSION}-stable.tar.xz" --strip-components=1 -C "$CRAFT_PART_SRC"
+      rm "flutter_linux_${VERSION}-stable.tar.xz"
+    override-build: |
+      # Strip engine source tree — not needed at runtime, saves ~600MB
+      rm -rf engine/src
+
+      # Flutter tarball includes a .git dir — replace it with a clean repo
+      # so version detection works without network access (NixOS-inspired)
+      rm -rf .git
+      git init -b stable
+      git add -A
+      VERSION=$(cat "$CRAFT_PROJECT_DIR/VERSION")
+      GIT_AUTHOR_NAME=sdkcraft GIT_COMMITTER_NAME=sdkcraft \
+        GIT_AUTHOR_EMAIL=noreply GIT_COMMITTER_EMAIL=noreply \
+        git commit -q --allow-empty -m "v${VERSION}"
+      git tag "${VERSION}"
+
+      # Ensure a version file exists for runtime version detection
+      echo "$VERSION" > "$CRAFT_PART_INSTALL"/version
+
+      # Pre-populate the artifact cache (NixOS-inspired).
+      # Precache moves dart-sdk to dart-sdk.old and re-downloads it; the
+      # download may fail inside the build sandbox, so save/restore it.
+      export HOME="$(mktemp -d)"
+      export FLUTTER_ALREADY_LOCKED=true
+      cp -a bin/cache/dart-sdk bin/cache/dart-sdk.bak
+      bin/flutter config --no-analytics 2>/dev/null || true
+      bin/flutter precache --linux 2>/dev/null || true
+      if [ ! -x bin/cache/dart-sdk/bin/dart ]; then
+        rm -rf bin/cache/dart-sdk bin/cache/dart-sdk.old
+        mv bin/cache/dart-sdk.bak bin/cache/dart-sdk
+      else
+        rm -rf bin/cache/dart-sdk.bak
+      fi
+
+      # Pre-resolve flutter_tools so pub doesn't write to the SDK at runtime
+      bin/cache/dart-sdk/bin/dart pub get --directory=packages/flutter_tools 2>/dev/null || true
+
+      cp -a . "$CRAFT_PART_INSTALL"
+    override-prime: |
+      craftctl default
+      # Ensure mount plug targets exist (SDKs are ro volumes).
+      # .git and bin/cache must be pre-created so the linter can validate the plugs.
+      mkdir -p .git bin/cache packages/flutter_tools/.dart_tool

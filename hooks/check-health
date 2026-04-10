@@ -1,0 +1,15 @@
+set -eu
+
+fail() {
+  workshopctl set-health --code="$1" error "$2"
+  exit 0
+}
+
+[ -x "${SDK}/bin/flutter" ] || fail "flutter-missing" "flutter binary not found under ${SDK}/bin"
+[ -x "${SDK}/bin/cache/dart-sdk/bin/dart" ] || fail "dart-missing" "dart binary not found"
+
+if sudo -iu workshop -- "${SDK}/bin/cache/dart-sdk/bin/dart" --version >/dev/null 2>&1; then
+  workshopctl set-health okay
+else
+  fail "dart-version-failed" "Dart version check failed"
+fi

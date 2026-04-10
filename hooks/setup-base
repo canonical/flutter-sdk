@@ -1,0 +1,33 @@
+# Point PATH at the SDK directly. The .git and bin/cache mount plugs
+# make those locations writable; everything else is read-only.
+# FLUTTER_PREBUILT_ENGINE_VERSION pins the engine artifact hash so
+# update_engine_version.sh writes the correct stamp without resolving
+# against our synthetic git repo.
+ENGINE_VERSION=$(cat "$SDK/bin/internal/engine.version" 2>/dev/null || true)
+cat <<EOF >/etc/profile.d/flutter.sh
+export FLUTTER_ROOT="$SDK"
+export FLUTTER_ALREADY_LOCKED=true
+export FLUTTER_PREBUILT_ENGINE_VERSION="$ENGINE_VERSION"
+export PATH="$SDK/bin:$SDK/bin/cache/dart-sdk/bin:\$HOME/.pub-cache/bin:\$PATH"
+EOF
+
+git config --global --add safe.directory "$SDK"
+
+# Save bin/cache contents before the cache mount plug replaces them
+# with an empty writable directory. setup-project will seed the mount
+# from this copy on first launch.
+CACHE_STAGING=/var/cache/flutter-sdk
+if [ ! -d "$CACHE_STAGING" ]; then
+  mkdir -p "$CACHE_STAGING"
+  cp -a "$SDK/bin/cache/." "$CACHE_STAGING/"
+fi
+
+# Save flutter_tools .dart_tool before mount plug replaces it
+DT_STAGING=/var/cache/flutter-dart-tool
+if [ ! -d "$DT_STAGING" ]; then
+  mkdir -p "$DT_STAGING"
+  cp -a "$SDK/packages/flutter_tools/.dart_tool/." "$DT_STAGING/"
+fi
+
+apt-get update
+eatmydata apt-get install unzip clang cmake ninja-build pkg-config libgtk-3-dev
