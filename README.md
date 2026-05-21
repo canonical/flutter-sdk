@@ -128,7 +128,7 @@ This SDK doesn't define any slots.
 
 - Flutter community: [Flutter Community](https://flutter.dev/community)
 - Workshop forum:
-  [Workshop Discourse](https://discourse.canonical.com/c/engineering/sdk/34)
+  [Discourse](https://discourse.ubuntu.com/)
 - Please review our
   [Code of Conduct](https://ubuntu.com/community/ethos/code-of-conduct) before
   participating.
