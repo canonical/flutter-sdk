@@ -120,7 +120,7 @@ This SDK doesn't define any slots.
 - [Flutter documentation](https://docs.flutter.dev/)
 - [Dart documentation](https://dart.dev/guides)
 - [Flutter Linux desktop](https://docs.flutter.dev/platform-integration/linux/building)
-- [Workshop documentation](https://canonical-workshop.readthedocs-hosted.com/latest/)
+- [Workshop documentation](https://ubuntu.com/workshop/docs/)
 
 ---
 
