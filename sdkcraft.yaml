@@ -1,6 +1,6 @@
 name: flutter
 adopt-info: flutter
-build-base: ubuntu@24.04
+build-base: ubuntu@26.04
 title: Flutter SDK
 summary: Google's UI toolkit for multi-platform apps
 description: |
