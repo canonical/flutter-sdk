@@ -15,11 +15,15 @@ git config --global --add safe.directory "$SDK"
 
 # Save bin/cache contents before the cache mount plug replaces them
 # with an empty writable directory. setup-project will seed the mount
-# from this copy on first launch.
+# from this copy on first launch. setup-project runs as the workshop
+# user, so the staging dir must be owned by it — the upstream Flutter
+# precache leaves at least one file (artifacts/material_fonts/codepoints)
+# at mode 0640 root:root, which would otherwise block the seeding cp.
 CACHE_STAGING=/var/cache/flutter-sdk
 if [ ! -d "$CACHE_STAGING" ]; then
   mkdir -p "$CACHE_STAGING"
   cp -a "$SDK/bin/cache/." "$CACHE_STAGING/"
+  chown -R workshop:workshop "$CACHE_STAGING"
 fi
 
 # Save flutter_tools .dart_tool before mount plug replaces it
@@ -27,6 +31,7 @@ DT_STAGING=/var/cache/flutter-dart-tool
 if [ ! -d "$DT_STAGING" ]; then
   mkdir -p "$DT_STAGING"
   cp -a "$SDK/packages/flutter_tools/.dart_tool/." "$DT_STAGING/"
+  chown -R workshop:workshop "$DT_STAGING"
 fi
 
 apt-get update
