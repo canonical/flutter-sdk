@@ -28,6 +28,7 @@ description: |
   - Pre-populates the Flutter artifact cache at build time so
     first-run latency is minimal.
 license: BSD-3-Clause
+website: https://github.com/canonical/flutter-sdk
 platforms:
   amd64:
     build-on: [amd64]
