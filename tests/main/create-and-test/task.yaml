@@ -1,0 +1,29 @@
+summary: A generated Flutter app resolves deps and passes flutter test
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # Exercise the toolchain the way a user would: scaffold the default
+  # counter app, resolve its pub dependencies into the persisted cache,
+  # and run the template widget test that ships with `flutter create`.
+  workshop exec -- bash -lc '
+    set -eu
+    cd "$HOME"
+    rm -rf demo
+    flutter create demo
+    cd demo
+    flutter test
+  '
+  # cupertino_icons is the default template's hosted dependency. Its
+  # presence proves pub resolved into the bind-mounted cache at
+  # ~/.pub-cache rather than somewhere ephemeral.
+  workshop exec -- bash -lc 'ls "$HOME/.pub-cache/hosted/pub.dev"' | MATCH cupertino_icons
+
+debug: |
+  workshop exec -- bash -lc 'flutter --version' || true
+  workshop exec -- bash -lc 'ls -la "$HOME/.pub-cache/hosted/pub.dev"' || true
