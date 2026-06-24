@@ -1,0 +1,19 @@
+summary: flutter --version reports the SDK's pinned Flutter release
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # EXPECTED_VERSION comes from the repo's VERSION file (see spread.yaml).
+  # Escape the dots so they are matched literally rather than as regex
+  # wildcards.
+  EXPECTED_REGEX="${EXPECTED_VERSION//./\\.}"
+  workshop exec -- bash -lc 'flutter --version' | MATCH "Flutter $EXPECTED_REGEX"
+
+debug: |
+  echo "EXPECTED_VERSION=$EXPECTED_VERSION"
+  workshop exec -- bash -lc 'flutter --version' || true
