@@ -14,3 +14,7 @@ suites:
     summary: Test the flutter SDK inside workshops with different bases
     environment:
       BASE/noble: ubuntu@24.04
+      # VERSION is not tracked on main; it is materialised on the `latest`
+      # branch (and locally during validation). Read it from the repo root
+      # so the version test can assert the SDK's pinned Flutter release.
+      EXPECTED_VERSION: '$(HOST: cat "`git rev-parse --show-toplevel`/VERSION")'
