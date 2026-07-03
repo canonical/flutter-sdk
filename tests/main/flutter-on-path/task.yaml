@@ -1,0 +1,18 @@
+summary: The flutter CLI is on PATH for the workshop user
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # `workshop exec` already runs a login shell, so the SDK's PATH
+  # additions from /etc/profile.d/flutter.sh are in effect. `which` is
+  # a real binary, so it can be called directly without a shell wrapper.
+  workshop exec -- which flutter | MATCH '/bin/flutter$'
+
+debug: |
+  workshop exec -- bash -c 'echo "$PATH"' || true
+  workshop exec -- cat /etc/profile.d/flutter.sh || true
