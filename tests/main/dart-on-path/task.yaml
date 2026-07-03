@@ -10,10 +10,10 @@ restore: |
 execute: |
   # Flutter ships a `dart` wrapper at $SDK/bin (alongside flutter) as well
   # as the real binary under bin/cache/dart-sdk/bin; setup-base puts
-  # $SDK/bin first on PATH, so `command -v` resolves the wrapper. Either
+  # $SDK/bin first on PATH, so `which` resolves the wrapper. Either
   # location ends in /bin/dart, so match that suffix.
-  workshop exec -- bash -lc 'command -v dart' | MATCH '/bin/dart$'
+  workshop exec -- which dart | MATCH '/bin/dart$'
 
 debug: |
-  workshop exec -- bash -lc 'echo "$PATH"' || true
-  workshop exec -- bash -lc 'dart --version' || true
+  workshop exec -- bash -c 'echo "$PATH"' || true
+  workshop exec -- dart --version || true

@@ -12,8 +12,8 @@ execute: |
   # Escape the dots so they are matched literally rather than as regex
   # wildcards.
   EXPECTED_REGEX="${EXPECTED_VERSION//./\\.}"
-  workshop exec -- bash -lc 'flutter --version' | MATCH "Flutter $EXPECTED_REGEX"
+  workshop exec -- flutter --version | MATCH "Flutter $EXPECTED_REGEX"
 
 debug: |
   echo "EXPECTED_VERSION=$EXPECTED_VERSION"
-  workshop exec -- bash -lc 'flutter --version' || true
+  workshop exec -- flutter --version || true

@@ -2,3 +2,11 @@ name: test-flutter
 base: ${BASE}
 sdks:
   - name: try-flutter
+actions:
+  create-demo: |
+    cd "$HOME"
+    rm -rf demo
+    flutter create demo
+  test-demo: |
+    cd "$HOME/demo"
+    flutter test
