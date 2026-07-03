@@ -1,0 +1,27 @@
+# Regression test for a git safe.directory bug: setup-base runs
+# `git config --global --add safe.directory $SDK` as root, which writes
+# only to root's ~/.gitconfig. The workshop user that actually runs
+# flutter (and the git commands underneath it) never sees the
+# exception and gets "fatal: detected dubious ownership in repository"
+# on $SDK, which downstream Flutter commands turn into errors.
+summary: $SDK is a safe directory for the workshop user
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # `bash -lc` picks up `/etc/profile.d/flutter.sh` which setup-base
+  # writes — that exports `FLUTTER_ROOT=$SDK`. A bare `git rev-parse`
+  # in that dir is the minimal probe: without the safe.directory
+  # exception it exits non-zero with "fatal: detected dubious ownership".
+  workshop exec -- bash -lc 'git -C "$FLUTTER_ROOT" rev-parse HEAD'
+
+debug: |
+  workshop exec -- bash -lc 'git -C "$FLUTTER_ROOT" rev-parse HEAD' || true
+  workshop exec -- bash -lc 'git config --global --get-all safe.directory' || true
+  workshop exec -- cat /etc/gitconfig 2>/dev/null || true
+  workshop exec -- sudo -n cat /root/.gitconfig 2>/dev/null || true
