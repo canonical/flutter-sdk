@@ -11,7 +11,14 @@ export FLUTTER_PREBUILT_ENGINE_VERSION="$ENGINE_VERSION"
 export PATH="$SDK/bin:$SDK/bin/cache/dart-sdk/bin:\$HOME/.pub-cache/bin:\$PATH"
 EOF
 
-git config --global --add safe.directory "$SDK"
+# Run as the workshop user so the exception lands in the workshop
+# user's ~/.gitconfig — that's who actually runs flutter and the git
+# invocations underneath it. setup-base runs as root, so a bare
+# `git config --global` would land in /root/.gitconfig instead.
+# HOME must be set explicitly because `runuser` without `-l` preserves
+# the caller's env (root's HOME).
+runuser -u workshop -- env HOME=/home/workshop \
+  git config --global --add safe.directory "$SDK"
 
 # Save bin/cache contents before the cache mount plug replaces them
 # with an empty writable directory. setup-project will seed the mount
