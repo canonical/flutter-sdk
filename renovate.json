@@ -13,8 +13,8 @@
       "matchStrings": [
         "(?<currentValue>[0-9.]+)"
       ],
-      "depNameTemplate": "flutter/flutter",
-      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "flutter",
+      "datasourceTemplate": "flutter-version",
       "versioningTemplate": "semver"
     }
   ],
@@ -25,7 +25,7 @@
   ],
   "packageRules": [
     {
-      "matchPackageNames": ["flutter/flutter"],
+      "matchPackageNames": ["flutter"],
       "matchBaseBranches": ["latest"]
     }
   ]
