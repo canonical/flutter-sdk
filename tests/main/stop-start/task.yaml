@@ -1,0 +1,33 @@
+# Regression test for canonical/flutter-sdk#14: after a container restart
+# (stop -> start, e.g. a host reboot) Workshop remounts the read-only SDK
+# volume on top of its own writable bin/cache overlay, so bin/cache becomes
+# read-only. Flutter's update_engine_version.sh rewrites bin/cache/engine.stamp
+# on every invocation and aborts with "Read-only file system", breaking the
+# flutter command until `workshop restore`.
+summary: flutter still works after a workshop stop/start cycle
+
+prepare: |
+  envsubst '${BASE}' <workshop.yaml.in >workshop.yaml
+  workshop launch
+
+restore: |
+  workshop remove || true
+
+execute: |
+  # Baseline: flutter works right after launch.
+  workshop exec -- flutter --version | MATCH "Flutter"
+
+  # Mimic a host reboot / container restart. `workshop launch` establishes the
+  # correct mount order (writable overlays on top), but a plain start does not.
+  workshop stop test-flutter
+  workshop start test-flutter
+
+  # Regression: flutter must still work after the restart. When the bug is
+  # present, bin/cache is read-only and update_engine_version.sh aborts with
+  # "Read-only file system", so flutter fails and this MATCH does not.
+  workshop exec -- flutter --version | MATCH "Flutter"
+
+debug: |
+  workshop exec -- bash -lc 'stat -f -c "bin/cache fstype=%T" "$FLUTTER_ROOT/bin/cache"' || true
+  workshop exec -- bash -lc '[ -w "$FLUTTER_ROOT/bin/cache" ] && echo "bin/cache WRITABLE" || echo "bin/cache READ-ONLY"' || true
+  workshop exec -- flutter --version || true
